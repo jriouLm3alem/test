@@ -2,6 +2,9 @@ import express from 'express';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 10000;
@@ -9,9 +12,9 @@ const port = process.env.PORT || 10000;
 // Parse JSON body
 app.use(express.json());
 
-// PostgreSQL connection using your URL
+// PostgreSQL connection using environment variable
 const pool = new Pool({
-  connectionString: 'postgresql://farm_database_bv66_user:R7G48PsqUPHkht8oHoCT0Zf5BmeM1ACD@dpg-d0nftnpr0fns7390b120-a/farm_database_bv66',
+  connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false,
   },
@@ -20,6 +23,11 @@ const pool = new Pool({
 // Home route
 app.get('/', (req, res) => {
   res.send('🌿 Smart Farm API is online!');
+});
+
+// Test route to check server status quickly
+app.get('/test', (req, res) => {
+  res.json({ message: 'API is working!' });
 });
 
 // Login route
@@ -41,7 +49,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      'your_jwt_secret_key_here', // 🔐 Replace with env variable later
+      process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
