@@ -2,19 +2,16 @@ import express from 'express';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 10000;
+const port = 10000; // Hardcoded port (replace if needed)
 
 // Parse JSON body
 app.use(express.json());
 
-// PostgreSQL connection using environment variable
+// PostgreSQL connection with hardcoded connection string
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: 'postgresql://farm_database_bv66_user:R7G48PsqUPHkht8oHoCT0Zf5BmeM1ACD@dpg-d0nftnpr0fns7390b120-a.oregon-postgres.render.com/farm_database_bv66', // Replace with your actual DB connection string
   ssl: {
     rejectUnauthorized: false,
   },
@@ -49,7 +46,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      process.env.JWT_SECRET,
+      'your_jwt_secret_key', // Replace with your actual JWT secret
       { expiresIn: '1h' }
     );
 
