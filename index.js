@@ -48,11 +48,19 @@ mqttClient.on('message', async (topic, message) => {
     const data = JSON.parse(message.toString());
     console.log('📥 MQTT received:', data);
 
-    const { temperature, humidity, soil_moisture, light, water_level, counter } = data;
-
+    const { temperature,
+      humidity,
+      soil_moisture,
+      light, // maps to light_intensity
+      water_level,
+      user_id = 1, // default user
+      zone_id = 1  // default zone } = data;
     await pool.query(
-      'INSERT INTO sensor_data (temperature, humidity, soil_moisture, light, water_level, counter, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
-      [temperature, humidity, soil_moisture, light, water_level, counter || 0]
+      `INSERT INTO sensor_readings (
+        user_id, zone_id, soil_moisture, temperature, humidity,
+        light_intensity, water_level, timestamp
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+      [user_id, zone_id, soil_moisture, temperature, humidity, light, water_level]
     );
 
     console.log('✅ Sensor data saved to database');
@@ -88,7 +96,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      'your_jwt_secret_key', // 🔁 Replace with a secure secret
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwiaWF0IjoxNzQ4NjE0MjMxLCJleHAiOjE3NDg2MTc4MzF9.kyLJgKnfWfsnqk8KGoJpvLlVv2bRy4GVhGMnbVxu9sU', // 🔁 Replace with a secure secret
       { expiresIn: '1h' }
     );
 
