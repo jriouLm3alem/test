@@ -2,17 +2,16 @@ import express from 'express';
 import { Pool } from 'pg';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import mqtt from 'mqtt'; // Added MQTT package
-import cors from 'cors'; // Added CORS package
+import mqtt from 'mqtt';
+import cors from 'cors';
 
 const app = express();
-const port = 10000; // Hardcoded port (replace if needed)
+const port = 10000;
 
-// Parse JSON body
 app.use(express.json());
-app.use(cors()); // Enable CORS for mobile app
+app.use(cors());
 
-// PostgreSQL connection with hardcoded connection string
+// PostgreSQL connection
 const pool = new Pool({
   connectionString: 'postgresql://farm_database_bv66_user:R7G48PsqUPHkht8oHoCT0Zf5BmeM1ACD@dpg-d0nftnpr0fns7390b120-a.oregon-postgres.render.com/farm_database_bv66',
   ssl: {
@@ -21,7 +20,10 @@ const pool = new Pool({
 });
 
 // MQTT connection
-const mqttClient = mqtt.connect('mqtt://broker.hivemq.com:1883');
+const mqttClient = mqtt.connect('mqtt://your-broker.onrender.com:1883', {
+  username: 'malek', // If required
+  password: '123456789', // If required
+});
 const mqttTopic = 'farm/esp32_01/sensors';
 
 mqttClient.on('connect', () => {
@@ -30,7 +32,7 @@ mqttClient.on('connect', () => {
     if (!err) {
       console.log(`Subscribed to ${mqttTopic}`);
     } else {
-      console.error('MQTT subscription error:', mqtt);
+      console.error('MQTT subscription error:', err);
     }
   });
 });
@@ -40,10 +42,10 @@ mqttClient.on('message', async (topic, message) => {
     const data = JSON.parse(message.toString());
     console.log('MQTT received:', data);
 
-    const { temperature, humidity, soil_moisture, light, water_level } = mqttClient;
+    const { temperature, humidity, soil_moisture, light, water_level } = data;
     await pool.query(
       'INSERT INTO sensor_data (temperature, humidity, soil_moisture, light, water_level, created_at) VALUES ($1, $2, $3, $4, $5, NOW())',
-      [temperature, humidity, soil_moisture, water_level]
+      [temperature, humidity, soil_moisture, light, water_level]
     );
     console.log('Sensor data saved');
   } catch (error) {
@@ -56,7 +58,7 @@ app.get('/', (req, res) => {
   res.send('🌿 Smart Farm API is online!');
 });
 
-// Test route to check server status quickly
+// Test route
 app.get('/test', (req, res) => {
   res.json({ message: 'API is working!' });
 });
@@ -80,7 +82,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      'your_jwt_secret_key', // Replace with your actual JWT secret
+      'your_jwt_secret_key',
       { expiresIn: '1h' }
     );
 
