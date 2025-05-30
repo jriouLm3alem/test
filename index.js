@@ -54,7 +54,8 @@ mqttClient.on('message', async (topic, message) => {
       light, // maps to light_intensity
       water_level,
       user_id = 1, // default user
-      zone_id = 1  // default zone } = data;
+      zone_id = 1  // default zone } 
+      } = data;
     await pool.query(
       `INSERT INTO sensor_readings (
         user_id, zone_id, soil_moisture, temperature, humidity,
