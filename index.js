@@ -20,7 +20,7 @@ const pool = new Pool({
 });
 
 // MQTT connection
-const mqttClient = mqtt.connect('mqtt://your-broker.onrender.com:1883', {
+const mqttClient = mqtt.connect('test-0ug8.onrender.com', {
   username: 'malek', // If required
   password: '123456789', // If required
 });
