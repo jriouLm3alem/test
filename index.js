@@ -20,14 +20,19 @@ const pool = new Pool({
 });
 
 // MQTT connection
-const mqttClient = mqtt.connect('test-0ug8.onrender.com', {
-  username: 'malek', // If required
-  password: '123456789', // If required
+const mqttClient = mqtt.connect('mqtt://test-0ug8.onrender.com:1883', {
+  username: 'malek',
+  password: '123456789',
+  // Uncomment for TLS (if required)
+  // protocol: 'mqtts',
+  // port: 8883,
+  // rejectUnauthorized: false // For testing, use proper certificates in production
 });
+
 const mqttTopic = 'farm/esp32_01/sensors';
 
 mqttClient.on('connect', () => {
-  console.log('MQTT connected');
+  console.log('MQTT connected to test-0ug8.onrender.com');
   mqttClient.subscribe(mqttTopic, (err) => {
     if (!err) {
       console.log(`Subscribed to ${mqttTopic}`);
@@ -37,17 +42,21 @@ mqttClient.on('connect', () => {
   });
 });
 
+mqttClient.on('error', (err) => {
+  console.error('MQTT connection error:', err);
+});
+
 mqttClient.on('message', async (topic, message) => {
   try {
     const data = JSON.parse(message.toString());
     console.log('MQTT received:', data);
 
-    const { temperature, humidity, soil_moisture, light, water_level } = data;
+    const { temperature, humidity, soil_moisture, light, water_level, counter } = data;
     await pool.query(
-      'INSERT INTO sensor_data (temperature, humidity, soil_moisture, light, water_level, created_at) VALUES ($1, $2, $3, $4, $5, NOW())',
-      [temperature, humidity, soil_moisture, light, water_level]
+      'INSERT INTO sensor_data (temperature, humidity, soil_moisture, light, water_level, counter, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
+      [temperature, humidity, soil_moisture, light, water_level, counter || 0]
     );
-    console.log('Sensor data saved');
+    console.log('Sensor data saved to database');
   } catch (error) {
     console.error('MQTT processing error:', error);
   }
@@ -82,7 +91,7 @@ app.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, email: user.email },
-      'your_jwt_secret_key',
+      'your_jwt_secret_key', // Replace with a secure secret in production
       { expiresIn: '1h' }
     );
 
